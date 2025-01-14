@@ -160,16 +160,15 @@ impl std::ops::IndexMut<(u32, u32)> for SimpleImage {
     }
 }
 
-pub struct SimpleWindow<S> {
+pub struct SimpleWindow {
     context: sdl2::Sdl,
     canvas: sdl2::render::Canvas<sdl2::video::Window>,
     width: u32,
     height: u32,
-    state: S,
 }
 
-impl<S> SimpleWindow<S> {
-    pub fn new(width: u32, height: u32, state: S) -> Result<SimpleWindow<S>, Box<dyn std::error::Error>> {
+impl SimpleWindow {
+    pub fn new(width: u32, height: u32) -> Result<SimpleWindow, Box<dyn std::error::Error>> {
         let context = sdl2::init()?;
         let video_subsystem = context.video()?;
 
@@ -184,14 +183,11 @@ impl<S> SimpleWindow<S> {
             canvas,
             width,
             height,
-            state,
         })
     }
 
     pub fn width(&self) -> u32 { self.width }
     pub fn height(&self) -> u32 { self.height }
-    pub fn state(&self) -> &S { &self.state }
-    pub fn state_mut(&mut self) -> &mut S { &mut self.state }
 
     pub fn draw_image(
         &mut self,
@@ -258,8 +254,8 @@ impl<S> SimpleWindow<S> {
         Ok(())
     }
 
-    pub fn run<F>(mut self, callback: F) -> Result<(), Box<dyn std::error::Error>>
-        where F: Fn(&mut SimpleWindow<S>, Vec<sdl2::event::Event>) -> Result<(), Box<dyn std::error::Error>>,
+    pub fn run<F, S>(mut self, mut state: S, mut callback: F) -> Result<(), Box<dyn std::error::Error>>
+        where F: FnMut(&mut SimpleWindow, &mut S, Vec<sdl2::event::Event>) -> Result<(), Box<dyn std::error::Error>>,
     {
         self.canvas.set_draw_color(Color::RGBA(0, 0, 0, 0xFF));
         self.canvas.clear();
@@ -279,7 +275,7 @@ impl<S> SimpleWindow<S> {
                 }
             }
 
-            callback(&mut self, events)?;
+            callback(&mut self, &mut state, events)?;
 
             self.canvas.present();
             ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
