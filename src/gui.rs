@@ -5,8 +5,9 @@ pub use rusttype::Font;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 
-pub use sdl2::event::Event;
+pub use sdl2::event::{Event, WindowEvent};
 pub use sdl2::rect::Rect;
+pub use sdl2::mouse::MouseButton;
 
 use crate::Point;
 
@@ -71,7 +72,7 @@ impl SimpleImage {
     pub fn width(&self) -> u32 { self.width }
     pub fn height(&self) -> u32 { self.height }
 
-    pub fn draw_polygon(&mut self, polygon: &[Point], value: [u8; 4])
+    pub fn draw_polygon(&mut self, polygon: &[Point], color: [u8; 4])
     {
         let lines: Vec<(Point, Point)> = polygon.iter()
             .copied()
@@ -119,7 +120,7 @@ impl SimpleImage {
                 .filter_map(|(i, l)| if i % 2 == 0 { Some(l) } else { None }) {
 
                 for x in x0..=x1 {
-                    self[(x as u32, y as u32)] = value;
+                    self[(x as u32, y as u32)] = color;
                 }
             }
 

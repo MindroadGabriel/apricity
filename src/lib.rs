@@ -9,6 +9,13 @@ pub struct Point {
 }
 
 impl Point {
+    pub fn new(x: f64, y: f64) -> Self {
+        Point {
+            x,
+            y,
+        }
+    }
+
     pub fn coordinate(&self, width: f64, height: f64) -> Coordinate {
         let lon = 180.0*(2.0*self.x/(width-1.0) - 1.0);
         let lat = 90.0*(1.0 - 2.0*self.y/(height-1.0));
