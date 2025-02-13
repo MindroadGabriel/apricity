@@ -2,13 +2,15 @@ pub mod gui;
 
 pub const MEAN_EARTH_RADIUS: f64 = 6371008.8;
 
-#[derive(Copy, Clone, Debug)]
+/// Represents a point on a two-dimensional plane.
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug)]
 pub struct Point {
     pub x: f64,
     pub y: f64,
 }
 
 impl Point {
+    /// Create a new point with the given x and y coordinate
     pub fn new(x: f64, y: f64) -> Self {
         Point {
             x,
@@ -16,6 +18,9 @@ impl Point {
         }
     }
 
+    /// Convert the point to a coordinate of a place on the surface of the earth.
+    /// Provide the width and height of the earth projection this object is representing a point on.
+    /// A point at (0, 0) is at the top left of the map projection.
     pub fn coordinate(&self, width: f64, height: f64) -> Coordinate {
         let lon = 180.0*(2.0*self.x/(width-1.0) - 1.0);
         let lat = 90.0*(1.0 - 2.0*self.y/(height-1.0));
@@ -23,22 +28,30 @@ impl Point {
         Coordinate([lon, lat])
     }
 
+    /// Calculate the distance between two points.
     pub fn distance(&self, rhs: Point) -> f64 {
         ((self.x - rhs.x).powi(2) + (self.y - rhs.y).powi(2)).sqrt()
     }
 }
 
-#[derive(Copy, Clone, Debug, serde::Serialize, serde::Deserialize)]
+/// Represents a position on earth as a longitude and a latitude
+#[derive(Copy, Clone, PartialEq, PartialOrd, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Coordinate([f64; 2]);
 
 impl Coordinate {
+    /// Create a new coordinate from a given longitude and latitude.
     pub fn new(lon: f64, lat: f64) -> Self {
         Coordinate([ lon, lat ])
     }
 
+    /// Getter for the longitude component
     pub fn lon(&self) -> f64 { self.0[0] }
+    /// Getter for the latitude component
     pub fn lat(&self) -> f64 { self.0[1] }
 
+    /// Convert the coordinate to a point.
+    /// Provide the width and the height of the projection.
+    /// A point at (0, 0) is at the top left of the map projection.
     pub fn screen(&self, width: f64, height: f64) -> Point {
         let x = (width-1.0)*(self.lon()/180.0 + 1.0)/2.0;
         let y = (height-1.0)*(1.0 - self.lat()/90.0)/2.0;
@@ -46,6 +59,7 @@ impl Coordinate {
         Point { x, y }
     }
 
+    /// Find the distance between two coordinates on earth, by the most direct line on the surface, in meters.
     /// Tedius to implement and test, so this borrows from
     /// https://docs.rs/geo/0.11.0/geo/algorithm/haversine_distance/trait.HaversineDistance.html
     pub fn great_circle_distance(&self, rhs: Coordinate) -> f64 {

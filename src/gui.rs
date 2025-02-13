@@ -11,6 +11,8 @@ pub use sdl2::mouse::MouseButton;
 
 use crate::Point;
 
+/// Represents an bitmap image, with 32 bit per pixel.
+#[derive(Clone)]
 pub struct SimpleImage {
     data: Vec<u8>,
     width: u32,
@@ -18,6 +20,7 @@ pub struct SimpleImage {
 }
 
 impl SimpleImage {
+    /// Create a blank image with the specified width and height
     pub fn new(width: u32, height: u32) -> Self {
         let len = 4*width as usize*height as usize;
         SimpleImage {
@@ -27,6 +30,7 @@ impl SimpleImage {
         }
     }
 
+    /// Create an image that is a rendering of the specified text in the specified font.
     pub fn create_text_image(
         font: &Font<'static>,
         text: &str,
@@ -69,9 +73,12 @@ impl SimpleImage {
         Ok(buffer)
     }
 
+    /// Getter for the width of the image
     pub fn width(&self) -> u32 { self.width }
+    /// Getter for the height of the image
     pub fn height(&self) -> u32 { self.height }
 
+    /// Given a list of all points that define it, draw a polygon onto this image.
     pub fn draw_polygon(&mut self, polygon: &[Point], color: [u8; 4])
     {
         let lines: Vec<(Point, Point)> = polygon.iter()
@@ -161,6 +168,7 @@ impl std::ops::IndexMut<(u32, u32)> for SimpleImage {
     }
 }
 
+/// Represents an SDL window
 pub struct SimpleWindow {
     context: sdl2::Sdl,
     canvas: sdl2::render::Canvas<sdl2::video::Window>,
@@ -169,6 +177,7 @@ pub struct SimpleWindow {
 }
 
 impl SimpleWindow {
+    /// Creates a new window with the given pixel width and height.
     pub fn new(width: u32, height: u32) -> Result<SimpleWindow, Box<dyn std::error::Error>> {
         let context = sdl2::init()?;
         let video_subsystem = context.video()?;
@@ -187,9 +196,20 @@ impl SimpleWindow {
         })
     }
 
+    /// Getter for the width of the represented window.
     pub fn width(&self) -> u32 { self.width }
+    /// Getter for the height of the represented window.
     pub fn height(&self) -> u32 { self.height }
 
+    /// Draw the provided image onto this screen.
+    ///
+    /// # Arguments
+    ///
+    /// * `image`: image to draw.
+    /// * `target`: an optional rectangle that specifies the area of the screen the image should
+    /// be written to. If omitted, stretches the image to fit the entire screen.
+    /// * `blend`: if true, performs alpha blending. If false, all previous pixels within
+    /// the bounding box are discarded
     pub fn draw_image(
         &mut self,
         image: &SimpleImage,
@@ -217,6 +237,15 @@ impl SimpleWindow {
         Ok(())
     }
 
+    /// Draw a circle directly onto the screen
+    ///
+    /// # Arguments
+    ///
+    /// * `cx`: center x coordinate
+    /// * `cy`: center y coordinate
+    /// * `radius`: radius of the drawn circle
+    /// * `thickness`: thickness of the stroke of the circle
+    /// * `color`: color of the circle
     pub fn stroke_circle(
         &mut self,
         cx: f64,
@@ -255,6 +284,34 @@ impl SimpleWindow {
         Ok(())
     }
 
+    /// Execute the provided function repeatedly, as a core loop for the application.
+    ///
+    /// Use the state parameter to store state that is persistent between calls of the core loop.
+    /// If you use an inline function as a callback, you may also use captured variables to store
+    /// persistent state.
+    ///
+    /// The callback takes a window, a mutable reference to the state, and a Vec of sdl events that
+    /// have occurred since the last call of the function.
+    ///
+    /// If an error occurs in the callback, run stops looping and returns the error
+    ///
+    /// Example
+    /// ```
+    /// struct State {
+    ///     variable: i32,
+    /// }
+    /// let initial_state = State {variable: 5};
+    /// window.run(initial_state, |window, state, events| {
+    ///     state.variable += 1;
+    ///     Ok(())
+    /// });
+    /// ```
+    /// You may also omit state by passing the empty tuple and ignoring that parameter inside the function
+    /// ```
+    /// window.run((), |window, _, events| {
+    ///     Ok(())
+    /// });
+    /// ```
     pub fn run<F, S>(mut self, mut state: S, mut callback: F) -> Result<(), Box<dyn std::error::Error>>
         where F: FnMut(&mut SimpleWindow, &mut S, Vec<sdl2::event::Event>) -> Result<(), Box<dyn std::error::Error>>,
     {
